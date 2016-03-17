@@ -1,32 +1,33 @@
-// Copyright (C) 2011 Milo Yip
+// Tencent is pleased to support the open source community by making RapidJSON available.
+// 
+// Copyright (C) 2015 THL A29 Limited, a Tencent company, and Milo Yip. All rights reserved.
 //
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
+// Licensed under the MIT License (the "License"); you may not use this file except
+// in compliance with the License. You may obtain a copy of the License at
 //
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
+// http://opensource.org/licenses/MIT
 //
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+// Unless required by applicable law or agreed to in writing, software distributed 
+// under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR 
+// CONDITIONS OF ANY KIND, either express or implied. See the License for the 
+// specific language governing permissions and limitations under the License.
 
 #ifndef RAPIDJSON_ERROR_ERROR_H__
 #define RAPIDJSON_ERROR_ERROR_H__
+
+#include "../rapidjson.h"
+
+/*! \file error.h */
+
+/*! \defgroup RAPIDJSON_ERRORS RapidJSON error handling */
 
 ///////////////////////////////////////////////////////////////////////////////
 // RAPIDJSON_ERROR_CHARTYPE
 
 //! Character type of error messages.
-/*! The default charater type is char.
-    On Windows, user can define this macro as TCHAR for supporting both
+/*! \ingroup RAPIDJSON_ERRORS
+    The default character type is \c char.
+    On Windows, user can define this macro as \c TCHAR for supporting both
     unicode/non-unicode settings.
 */
 #ifndef RAPIDJSON_ERROR_CHARTYPE
@@ -36,22 +37,24 @@
 ///////////////////////////////////////////////////////////////////////////////
 // RAPIDJSON_ERROR_STRING
 
-//! Macro for converting string literial to RAPIDJSON_ERROR_CHARTYPE[].
-/*! By default this conversion macro does nothing.
-    On Windows, user can define this macro as _T(x) for supporting both 
+//! Macro for converting string literial to \ref RAPIDJSON_ERROR_CHARTYPE[].
+/*! \ingroup RAPIDJSON_ERRORS
+    By default this conversion macro does nothing.
+    On Windows, user can define this macro as \c _T(x) for supporting both
     unicode/non-unicode settings.
 */
 #ifndef RAPIDJSON_ERROR_STRING
 #define RAPIDJSON_ERROR_STRING(x) x
 #endif
 
-namespace rapidjson {
+RAPIDJSON_NAMESPACE_BEGIN
 
 ///////////////////////////////////////////////////////////////////////////////
 // ParseErrorCode
 
 //! Error code of parsing.
-/*! \see GenericReader::Parse, GenericReader::GetParseErrorCode
+/*! \ingroup RAPIDJSON_ERRORS
+    \see GenericReader::Parse, GenericReader::GetParseErrorCode
 */
 enum ParseErrorCode {
     kParseErrorNone = 0,                        //!< No error.
@@ -78,11 +81,12 @@ enum ParseErrorCode {
     kParseErrorNumberMissExponent,              //!< Miss exponent in number.
 
     kParseErrorTermination,                     //!< Parsing was terminated.
-    kParseErrorUnspecificSyntaxError,           //!< Unspecific syntax error.
+    kParseErrorUnspecificSyntaxError            //!< Unspecific syntax error.
 };
 
 //! Result of parsing (wraps ParseErrorCode)
 /*!
+    \ingroup RAPIDJSON_ERRORS
     \code
         Document doc;
         ParseResult ok = doc.Parse("[42]");
@@ -126,17 +130,17 @@ private:
 };
 
 //! Function pointer type of GetParseError().
-/*! This is the prototype for GetParseError_X(), where X is a locale.
-    User can dynamically change locale in runtime, e.g.:
+/*! \ingroup RAPIDJSON_ERRORS
 
+    This is the prototype for \c GetParseError_X(), where \c X is a locale.
+    User can dynamically change locale in runtime, e.g.:
 \code
     GetParseErrorFunc GetParseError = GetParseError_En; // or whatever
     const RAPIDJSON_ERROR_CHARTYPE* s = GetParseError(document.GetParseErrorCode());
 \endcode
 */
-
 typedef const RAPIDJSON_ERROR_CHARTYPE* (*GetParseErrorFunc)(ParseErrorCode);
 
-} // namespace rapidjson
+RAPIDJSON_NAMESPACE_END
 
 #endif // RAPIDJSON_ERROR_ERROR_H__
