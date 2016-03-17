@@ -347,6 +347,31 @@ TEST(Writer, InvalidEncoding) {
     }
 }
 
+TEST(Writer, ValidateEncoding) {
+    {
+        StringBuffer buffer;
+        Writer<StringBuffer, UTF8<>, UTF8<>, CrtAllocator, kWriteValidateEncodingFlag> writer(buffer);
+        writer.StartArray();
+        EXPECT_TRUE(writer.String("\x24"));             // Dollar sign U+0024
+        EXPECT_TRUE(writer.String("\xC2\xA2"));         // Cents sign U+00A2
+        EXPECT_TRUE(writer.String("\xE2\x82\xAC"));     // Euro sign U+20AC
+        EXPECT_TRUE(writer.String("\xF0\x9D\x84\x9E")); // G clef sign U+1D11E
+        writer.EndArray();
+        EXPECT_STREQ("[\"\x24\",\"\xC2\xA2\",\"\xE2\x82\xAC\",\"\xF0\x9D\x84\x9E\"]", buffer.GetString());
+    }
+
+    // Fail in decoding invalid UTF-8 sequence http://www.cl.cam.ac.uk/~mgk25/ucs/examples/UTF-8-test.txt
+    {
+        StringBuffer buffer;
+        Writer<StringBuffer, UTF8<>, UTF8<>, CrtAllocator, kWriteValidateEncodingFlag> writer(buffer);
+        writer.StartArray();
+        EXPECT_FALSE(writer.String("\xfe"));
+        EXPECT_FALSE(writer.String("\xff"));
+        EXPECT_FALSE(writer.String("\xfe\xfe\xff\xff"));
+        writer.EndArray();
+    }
+}
+
 TEST(Writer, InvalidEventSequence) {
     // {]
     {
@@ -374,4 +399,43 @@ TEST(Writer, InvalidEventSequence) {
         EXPECT_THROW(writer.Int(1), AssertException);
         EXPECT_FALSE(writer.IsComplete());
     }
+}
+
+extern double zero; // clang -Wmissing-variable-declarations
+double zero = 0.0;	// Use global variable to prevent compiler warning
+
+TEST(Writer, NaN) {
+    double nan = zero / zero;
+    EXPECT_TRUE(internal::Double(nan).IsNan());
+    StringBuffer buffer;
+    Writer<StringBuffer> writer(buffer);
+    EXPECT_FALSE(writer.Double(nan));
+}
+
+TEST(Writer, Inf) {
+    double inf = 1.0 / zero;
+    EXPECT_TRUE(internal::Double(inf).IsInf());
+    StringBuffer buffer;
+    {
+        Writer<StringBuffer> writer(buffer);
+        EXPECT_FALSE(writer.Double(inf));
+    }
+    {
+        Writer<StringBuffer> writer(buffer);
+        EXPECT_FALSE(writer.Double(-inf));
+    }
+}
+
+TEST(Writer, RawValue) {
+    StringBuffer buffer;
+    Writer<StringBuffer> writer(buffer);
+    writer.StartObject();
+    writer.Key("a");
+    writer.Int(1);
+    writer.Key("raw");
+    const char json[] = "[\"Hello\\nWorld\", 123.456]";
+    writer.RawValue(json, strlen(json), kArrayType);
+    writer.EndObject();
+    EXPECT_TRUE(writer.IsComplete());
+    EXPECT_STREQ("{\"a\":1,\"raw\":[\"Hello\\nWorld\", 123.456]}", buffer.GetString());
 }

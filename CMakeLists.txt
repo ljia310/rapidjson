@@ -9,7 +9,9 @@ set(LIB_PATCH_VERSION "2")
 set(LIB_VERSION_STRING "${LIB_MAJOR_VERSION}.${LIB_MINOR_VERSION}.${LIB_PATCH_VERSION}")
 
 # compile in release with debug info mode by default
-SET(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING "Build Type")
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel." FORCE)
+endif()
 
 # Build all binaries in a separate directory
 SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
@@ -20,15 +22,36 @@ option(RAPIDJSON_BUILD_TESTS "Build rapidjson perftests and unittests." ON)
 option(RAPIDJSON_BUILD_THIRDPARTY_GTEST
     "Use gtest installation in `thirdparty/gtest` by default if available" OFF)
 
+option(RAPIDJSON_BUILD_CXX11 "Build rapidjson with C++11 (gcc/clang)" ON)
+
 option(RAPIDJSON_HAS_STDSTRING "" OFF)
 if(RAPIDJSON_HAS_STDSTRING)
     add_definitions(-DRAPIDJSON_HAS_STDSTRING)
 endif()
 
+find_program(CCACHE_FOUND ccache)
+if(CCACHE_FOUND)
+    set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ccache)
+    set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ccache)
+    if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Qunused-arguments -fcolor-diagnostics")
+    endif()
+endif(CCACHE_FOUND)
+
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native -Wall -Wextra -Werror")
+    if (RAPIDJSON_BUILD_CXX11)
+        if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS "4.7.0")
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+        else()
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+        endif()
+    endif()
 elseif (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native -Wall -Wextra -Werror -Wno-missing-field-initializers")
+    if (RAPIDJSON_BUILD_CXX11)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+    endif()
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
     add_definitions(-D_CRT_SECURE_NO_WARNINGS=1)
 endif()
